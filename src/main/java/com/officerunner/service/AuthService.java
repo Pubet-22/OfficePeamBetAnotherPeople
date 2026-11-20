@@ -36,7 +36,7 @@ public class AuthService {
         }
 
         AppUser user = new AppUser();
-        user.setId(UUID.randomUUID());
+        // id ให้ Hibernate สร้างเอง (@GeneratedValue UUID); ถ้า set เองก่อน save จะถูกมองเป็นแถวเดิมแล้วพัง
         user.setEmail(email);
         user.setFullName(request.fullName().trim());
         user.setPassword(passwordEncoder.encode(request.password()));
