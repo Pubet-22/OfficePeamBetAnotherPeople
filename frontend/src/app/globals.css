@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+/*
+ * Office Runner — scrapbook café
+ * A desk covered in paper: notes clipped with colourful binder clips, washi tape,
+ * stickers, gingham ribbon and cut-out letters. Everything sits on cream dotted paper.
+ */
+@theme {
+  --color-cream: #fff7ea;
+  --color-paper: #fffdf8;
+  --color-line: #ecdcc6;
+  --color-ink: #3b2a20;
+  --color-ink-soft: #7a6658;
+
+  --color-coral: #e2614b;
+  --color-coral-deep: #c24a36;
+  --color-pink: #ee8fb0;
+  --color-blush: #fadbe5;
+  --color-leaf: #7fb069;
+  --color-leaf-soft: #dff0d3;
+  --color-sky: #8fb8e6;
+  --color-sky-soft: #dceaf8;
+  --color-butter: #f3d878;
+  --color-butter-soft: #fbf0c6;
+  --color-lilac: #b79fe3;
+  --color-lilac-soft: #ebe3fa;
+  --color-coffee: #9a6440;
+  --color-berry: #c8323a;
+
+  --font-hand: var(--font-itim), ui-rounded, system-ui, sans-serif;
+  --font-chunky: var(--font-mitr), ui-sans-serif, system-ui, sans-serif;
+  --font-serif-cut: var(--font-chonburi), ui-serif, Georgia, serif;
+  --font-sans: var(--font-anuphan), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  /* dotted scrapbook paper */
+  background-color: var(--color-cream);
+  background-image: radial-gradient(var(--color-line) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-hand);
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+:focus-visible {
+  outline: 2.5px solid var(--color-sky);
+  outline-offset: 2px;
+}
+
+@layer components {
+  /* A sheet of paper lying on the desk. */
+  .paper {
+    position: relative;
+    background: var(--color-paper);
+    border-radius: 6px;
+    box-shadow:
+      0 1px 0 rgb(59 42 32 / 0.06),
+      0 12px 22px -16px rgb(59 42 32 / 0.45);
+  }
+
+  /* Ruled notebook paper with a pink margin line. */
+  .lined {
+    background-color: var(--color-paper);
+    background-image:
+      linear-gradient(90deg, transparent 2.25rem, rgb(238 143 176 / 0.55) 2.25rem, rgb(238 143 176 / 0.55) calc(2.25rem + 1.5px), transparent calc(2.25rem + 1.5px)),
+      repeating-linear-gradient(transparent 0 1.95rem, var(--color-sky-soft) 1.95rem 2rem);
+  }
+
+  /* Till receipt: white slip with a torn zig-zag bottom edge. */
+  .receipt {
+    position: relative;
+    background: #fff;
+    border-radius: 4px 4px 0 0;
+    box-shadow: 0 14px 22px -18px rgb(59 42 32 / 0.5);
+  }
+
+  .receipt::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -10px;
+    height: 10px;
+    background:
+      linear-gradient(-45deg, transparent 7px, #fff 0) 0 0 / 14px 14px repeat-x,
+      linear-gradient(45deg, transparent 7px, #fff 0) 0 0 / 14px 14px repeat-x;
+  }
+
+  /* Green gingham ribbon fabric. */
+  .gingham {
+    background-color: #fff;
+    background-image:
+      repeating-linear-gradient(0deg, rgb(127 176 105 / 0.45) 0 14px, transparent 14px 28px),
+      repeating-linear-gradient(90deg, rgb(127 176 105 / 0.45) 0 14px, transparent 14px 28px);
+  }
+
+  /* Sewn fabric label: dashed stitch just inside the edge. */
+  .stitched {
+    outline: 1.5px dashed currentColor;
+    outline-offset: -4px;
+  }
+
+  /* Die-cut sticker: thick white border and a soft drop. */
+  .sticker {
+    border: 3px solid #fff;
+    box-shadow: 0 6px 12px -8px rgb(59 42 32 / 0.55);
+  }
+
+  /* Dashed tear line inside a receipt. */
+  .tear {
+    border-top: 2px dashed var(--color-line);
+  }
+}
+
+/* Coffee rises in the tracking cup when the order moves on. */
+.cup-fill {
+  transform-origin: bottom;
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cup-fill {
+    transition: none;
+  }
+}
+
