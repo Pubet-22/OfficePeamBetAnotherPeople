@@ -27,6 +27,8 @@ server:
   port: ${PORT:8080}
 
 app:
+  jwt:
+    secret: ${JWT_SECRET:office-runner-backend-secure-jwt-secret-key-32bytes-min-2026}
   supabase:
     # https://<project-ref>.supabase.co
     url: ${SUPABASE_URL}

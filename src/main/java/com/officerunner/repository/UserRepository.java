@@ -16,6 +16,10 @@ public interface UserRepository extends JpaRepository<AppUser, UUID> {
     @Query("select u from AppUser u where u.id = :id")
     Optional<AppUser> findByIdForUpdate(UUID id);
 
+    Optional<AppUser> findByEmail(String email);
+
+    boolean existsByEmail(String email);
+
     @Modifying
     @Query(value = "insert into users (id, email, full_name) values (:id, :email, :fullName) on conflict (id) do nothing",
             nativeQuery = true)

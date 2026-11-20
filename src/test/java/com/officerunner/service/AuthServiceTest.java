@@ -1,0 +1,108 @@
+package com.officerunner.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import com.officerunner.common.ApiException;
+import com.officerunner.domain.AppUser;
+import com.officerunner.domain.Role;
+import com.officerunner.repository.UserRepository;
+import com.officerunner.web.dto.AuthRequests;
+import java.math.BigDecimal;
+import java.util.Optional;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+
+@ExtendWith(MockitoExtension.class)
+class AuthServiceTest {
+
+    @Mock
+    private UserRepository userRepo;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private JwtEncoder jwtEncoder;
+    @Mock
+    private Jwt mockJwt;
+
+    private AuthService authService;
+
+    @BeforeEach
+    void setUp() {
+        authService = new AuthService(userRepo, passwordEncoder, jwtEncoder);
+    }
+
+    @Test
+    void register_success() {
+        AuthRequests.Register req = new AuthRequests.Register("test@example.com", "pass1234", "Test User");
+
+        when(userRepo.existsByEmail("test@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("pass1234")).thenReturn("hashed-pwd");
+        when(userRepo.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(mockJwt);
+        when(mockJwt.getTokenValue()).thenReturn("mock-jwt-token");
+
+        AuthRequests.AuthResponse res = authService.register(req);
+
+        assertThat(res.accessToken()).isEqualTo("mock-jwt-token");
+        assertThat(res.tokenType()).isEqualTo("Bearer");
+        assertThat(res.user().email()).isEqualTo("test@example.com");
+        assertThat(res.user().fullName()).isEqualTo("Test User");
+    }
+
+    @Test
+    void register_duplicateEmail_throwsConflict() {
+        AuthRequests.Register req = new AuthRequests.Register("test@example.com", "pass1234", "Test User");
+        when(userRepo.existsByEmail("test@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.register(req))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining("อีเมลนี้มีผู้ใช้งานในระบบแล้ว");
+    }
+
+    @Test
+    void login_success() {
+        AuthRequests.Login req = new AuthRequests.Login("test@example.com", "pass1234");
+        AppUser user = new AppUser();
+        user.setId(UUID.randomUUID());
+        user.setEmail("test@example.com");
+        user.setPassword("hashed-pwd");
+        user.setRole(Role.USER);
+        user.setCoinBalance(BigDecimal.ZERO);
+
+        when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("pass1234", "hashed-pwd")).thenReturn(true);
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(mockJwt);
+        when(mockJwt.getTokenValue()).thenReturn("mock-jwt-token");
+
+        AuthRequests.AuthResponse res = authService.login(req);
+
+        assertThat(res.accessToken()).isEqualTo("mock-jwt-token");
+        assertThat(res.user().email()).isEqualTo("test@example.com");
+    }
+
+    @Test
+    void login_wrongPassword_throwsUnauthorized() {
+        AuthRequests.Login req = new AuthRequests.Login("test@example.com", "wrong-pass");
+        AppUser user = new AppUser();
+        user.setEmail("test@example.com");
+        user.setPassword("hashed-pwd");
+
+        when(userRepo.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong-pass", "hashed-pwd")).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.login(req))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+    }
+}
