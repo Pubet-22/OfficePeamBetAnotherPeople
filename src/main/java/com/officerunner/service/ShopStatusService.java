@@ -29,6 +29,7 @@ public class ShopStatusService {
             LocalTime rushEnd,
             String serverTime,
             String qrImageUrl,
+            BigDecimal coffeeServiceFee,
             BigDecimal generalServiceFee,
             BigDecimal premiumDiscountPercent,
             BigDecimal premiumPrice,
@@ -58,7 +59,7 @@ public class ShopStatusService {
         }
         return new ShopStatus(s.isOpen(), withinHours, rush, code == null, code, msg,
                 s.getOpenTime(), s.getCloseTime(), s.getRushStart(), s.getRushEnd(),
-                now.toOffsetDateTime().toString(), s.getQrImageUrl(), s.getGeneralServiceFee(),
+                now.toOffsetDateTime().toString(), s.getQrImageUrl(), s.getCoffeeServiceFee(), s.getGeneralServiceFee(),
                 s.getPremiumDiscountPercent(), s.getPremiumPrice(), s.getPremiumBonusCoins());
     }
 

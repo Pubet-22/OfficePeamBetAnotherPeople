@@ -34,6 +34,10 @@ public class SystemSettings {
     @Column(name = "rush_end")
     private LocalTime rushEnd;
 
+    /** ค่าวิ่งไปเอากาแฟต่อออเดอร์ (ตัวเครื่องดื่มจากตู้ฟรี) */
+    @Column(name = "coffee_service_fee")
+    private BigDecimal coffeeServiceFee = new BigDecimal("20");
+
     @Column(name = "general_service_fee")
     private BigDecimal generalServiceFee = new BigDecimal("20");
 

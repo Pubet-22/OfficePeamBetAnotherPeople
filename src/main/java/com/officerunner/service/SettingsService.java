@@ -42,6 +42,7 @@ public class SettingsService {
             if (r.rushStart() != null) s.setRushStart(r.rushStart());
             if (r.rushEnd() != null) s.setRushEnd(r.rushEnd());
         }
+        if (r.coffeeServiceFee() != null) s.setCoffeeServiceFee(r.coffeeServiceFee());
         if (r.generalServiceFee() != null) s.setGeneralServiceFee(r.generalServiceFee());
         if (r.premiumPrice() != null) s.setPremiumPrice(r.premiumPrice());
         if (r.premiumBonusCoins() != null) s.setPremiumBonusCoins(r.premiumBonusCoins());

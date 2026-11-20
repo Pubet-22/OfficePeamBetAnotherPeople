@@ -60,9 +60,10 @@ public class OrderService {
 
         // 2) ประเภทบริการ + คำนวณราคา
         BigDecimal subtotal = switch (r.serviceType()) {
-            case COFFEE -> fillCoffee(o, r);
+            case COFFEE -> fillCoffee(o, r, settings);
             case GENERAL -> fillGeneral(o, r, settings);
         };
+        subtotal = subtotal.setScale(2, RoundingMode.HALF_UP);
         BigDecimal discount = user.isPremium()
                 ? subtotal.multiply(settings.getPremiumDiscountPercent()).divide(HUNDRED, 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
@@ -184,14 +185,14 @@ public class OrderService {
 
     // ------------------------------------------------------------------ internals
 
-    private BigDecimal fillCoffee(ServiceOrder o, CreateOrderRequest r) {
+    private BigDecimal fillCoffee(ServiceOrder o, CreateOrderRequest r, SystemSettings s) {
         if (r.menuId() == null) throw ApiException.badRequest("MENU_REQUIRED", "กรุณาเลือกเมนู");
         CoffeeMenu menu = menuRepo.findById(r.menuId()).orElseThrow(() -> ApiException.notFound("Menu"));
         if (!menu.isAvailable()) throw ApiException.conflict("MENU_UNAVAILABLE", menu.getName() + " หมดชั่วคราว");
         Temperature temp = r.temperature() == null ? (menu.isAllowIced() ? Temperature.ICED : Temperature.HOT) : r.temperature();
         if (!menu.allows(temp)) throw ApiException.badRequest("TEMPERATURE_NOT_ALLOWED", menu.getName() + " ไม่มีแบบ " + temp);
-        int sweet = r.sweetnessLevel() == null ? 100 : r.sweetnessLevel();
-        if (!SWEETNESS_LEVELS.contains(sweet)) {
+        Integer sweet = r.sweetnessLevel(); // ไม่บังคับ: ความหวานส่วนใหญ่กำหนดมาจากเมนูของตู้แล้ว
+        if (sweet != null && !SWEETNESS_LEVELS.contains(sweet)) {
             throw ApiException.badRequest("INVALID_SWEETNESS", "ระดับความหวานต้องเป็น 0, 25, 50, 75 หรือ 100");
         }
         int qty = r.quantity() == null ? 1 : r.quantity();
@@ -200,7 +201,8 @@ public class OrderService {
         o.setSweetnessLevel(sweet);
         o.setQuantity(qty);
         o.setCustomDetails(blankToNull(r.customDetails())); // หมายเหตุเพิ่มเติม เช่น "นมโอ๊ต"
-        return menu.getPrice().multiply(BigDecimal.valueOf(qty));
+        // ราคาเครื่องดื่ม (ปัจจุบันฟรี = 0) + ค่าวิ่งต่อออเดอร์
+        return menu.getPrice().multiply(BigDecimal.valueOf(qty)).add(s.getCoffeeServiceFee());
     }
 
     private BigDecimal fillGeneral(ServiceOrder o, CreateOrderRequest r, SystemSettings s) {

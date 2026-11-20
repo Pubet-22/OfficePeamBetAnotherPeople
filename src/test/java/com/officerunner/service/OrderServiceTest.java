@@ -49,7 +49,7 @@ class OrderServiceTest {
         when(shopStatus.statusFor(anyBoolean())).thenReturn(status(true, null));
         latte.setId(2L);
         latte.setName("ลาเต้");
-        latte.setPrice(new BigDecimal("55.00"));
+        latte.setPrice(BigDecimal.ZERO); // เครื่องดื่มจากตู้ฟรี
         when(menuRepo.findById(2L)).thenReturn(Optional.of(latte));
         when(orderRepo.save(any())).thenAnswer(inv -> {
             ServiceOrder o = inv.getArgument(0);
@@ -60,7 +60,7 @@ class OrderServiceTest {
 
     private static ShopStatusService.ShopStatus status(boolean canOrder, String code) {
         return new ShopStatusService.ShopStatus(true, true, false, canOrder, code, "msg",
-                null, null, null, null, "", null, null, null, null, null);
+                null, null, null, null, "", null, null, null, null, null, null);
     }
 
     private static CreateOrderRequest coffee(PaymentMethod pm, Boolean qrConfirmed) {
@@ -69,13 +69,13 @@ class OrderServiceTest {
     }
 
     @Test
-    void coffeeWalletOrderDebitsTotal() {
+    void freeCoffeeChargesServiceFeeOnly() {
         var res = service.create(userId, coffee(PaymentMethod.WALLET, null));
 
-        assertThat(res.totalPrice()).isEqualByComparingTo("110.00");
+        assertThat(res.totalPrice()).isEqualByComparingTo("20.00");
         assertThat(res.paymentStatus()).isEqualTo(PaymentStatus.PAID);
         assertThat(res.priority()).isFalse();
-        verify(wallet).debit(eq(userId), eq(new BigDecimal("110.00")), eq(TransactionType.ORDER_PAYMENT), eq(100L), any(), any());
+        verify(wallet).debit(eq(userId), eq(new BigDecimal("20.00")), eq(TransactionType.ORDER_PAYMENT), eq(100L), any(), any());
     }
 
     @Test
@@ -83,8 +83,8 @@ class OrderServiceTest {
         user.setPremium(true);
         var res = service.create(userId, coffee(PaymentMethod.WALLET, null));
 
-        assertThat(res.discountAmount()).isEqualByComparingTo("11.00");
-        assertThat(res.totalPrice()).isEqualByComparingTo("99.00");
+        assertThat(res.discountAmount()).isEqualByComparingTo("2.00");
+        assertThat(res.totalPrice()).isEqualByComparingTo("18.00");
         assertThat(res.priority()).isTrue();
     }
 

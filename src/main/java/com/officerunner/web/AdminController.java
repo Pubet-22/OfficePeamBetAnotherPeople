@@ -46,7 +46,7 @@ public class AdminController {
     @PostMapping("/shop/{state:open|close}")
     SystemSettings toggleShop(@PathVariable String state) {
         return settingsService.update(new SettingsUpdateRequest(state.equals("open"),
-                null, null, null, null, null, null, null, null, null, null, null));
+                null, null, null, null, null, null, null, null, null, null, null, null));
     }
 
     // ---------- queue ----------

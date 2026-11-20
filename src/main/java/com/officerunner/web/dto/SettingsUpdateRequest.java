@@ -15,6 +15,7 @@ public record SettingsUpdateRequest(
         LocalTime rushStart,
         LocalTime rushEnd,
         Boolean clearRushHour,
+        @DecimalMin("0") BigDecimal coffeeServiceFee,
         @DecimalMin("0") BigDecimal generalServiceFee,
         @DecimalMin("0") BigDecimal premiumPrice,
         @DecimalMin("0") BigDecimal premiumBonusCoins,

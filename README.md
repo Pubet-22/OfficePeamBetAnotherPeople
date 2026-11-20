@@ -14,6 +14,7 @@ Backend ระบบสั่งกาแฟ / งานจิปาถะใน
 
 1. สร้างโปรเจกต์ใน Supabase
 2. เปิด **SQL Editor** แล้วรันไฟล์ [supabase/schema.sql](supabase/schema.sql) (สร้างตาราง, RLS, trigger, Realtime, ข้อมูลเริ่มต้น)
+   - ถ้าเคยรัน `schema.sql` เวอร์ชันก่อนไปแล้ว ให้รัน [supabase/migrations/002_free_drinks_menu.sql](supabase/migrations/002_free_drinks_menu.sql) แทน (เพิ่ม `coffee_service_fee` และเปลี่ยนเมนูเป็นเครื่องดื่มจากตู้)
 3. คัดลอก `.env.example` เป็น `.env` แล้วกรอกค่า:
    - `SUPABASE_URL`: Project Settings > API > Project URL
    - `SUPABASE_DB_URL` / `USER` / `PASSWORD`: ปุ่ม **Connect** > **Session pooler** (แปลงเป็นรูปแบบ `jdbc:postgresql://HOST:5432/postgres?sslmode=require`)
@@ -33,7 +34,7 @@ Backend ระบบสั่งกาแฟ / งานจิปาถะใน
 ## กติกาทางธุรกิจ
 
 - **สั่งได้เมื่อ**: แอดมินเปิดสวิตช์ `is_open` และเวลาอยู่ใน 10:00-16:00 (Asia/Bangkok, แก้ได้) ถ้าอยู่ใน**ช่วงเร่งด่วน** (`rush_start`-`rush_end`, ค่าเริ่มต้น 12:00-13:00) จะสั่งได้เฉพาะ Premium
-- **ราคา**: กาแฟ = ราคาเมนู × จำนวน, งานจิปาถะ = `general_service_fee` (20 เหรียญ). Premium ได้ส่วนลด `premium_discount_percent` (10%)
+- **ราคา**: เครื่องดื่มจากตู้กาแฟฟรี (`price = 0`) ลูกค้าจ่ายแค่ค่าวิ่ง `coffee_service_fee` (20 เหรียญต่อออเดอร์ ไม่ว่าจะกี่แก้ว). สูตรคือ ราคาเมนู × จำนวน + `coffee_service_fee` ถ้าวันหน้ามีเมนูที่ไม่ฟรีก็ใช้ได้เลย. งานจิปาถะ = `general_service_fee` (20 เหรียญ). Premium ได้ส่วนลด `premium_discount_percent` (10%)
 - **Premium**: `POST /api/me/premium` หัก `premium_price` (199) จาก wallet แล้วแจก `premium_bonus_coins` (100) ทันที ออเดอร์ของ Premium ติดธง `priority` และขึ้นหน้าคิวแอดมินก่อน
 - **การจ่ายเงิน**
   - `WALLET`: หักเหรียญทันที, `paymentStatus = PAID`
@@ -74,7 +75,7 @@ Backend ระบบสั่งกาแฟ / งานจิปาถะใน
 ```json
 {
   "serviceType": "COFFEE",
-  "menuId": 1, "quantity": 1, "temperature": "ICED", "sweetnessLevel": 50,
+  "menuId": 2, "quantity": 1, "temperature": "ICED",
   "deskLocation": "A-12", "locationNote": "โต๊ะริมหน้าต่าง ใกล้ห้องประชุม B",
   "paymentMethod": "WALLET"
 }
@@ -92,7 +93,8 @@ Backend ระบบสั่งกาแฟ / งานจิปาถะใน
 }
 ```
 `generalCategory`: `WASH_GLASS`, `TRASH`, `PICKUP_FOOD`, `PRINT`, `OTHER`
-`sweetnessLevel`: `0`, `25`, `50`, `75`, `100`
+`temperature`: ไม่ต้องส่งก็ได้ ระบบเลือกให้ตามเมนู (แต่ละเมนูจากตู้มีแบบร้อนหรือเย็นอย่างเดียว)
+`sweetnessLevel` (ไม่บังคับ เพราะเมนูของตู้กำหนดความหวานมาแล้ว เช่น Latte (Sweet) / Latte (Unsweetened)): `0`, `25`, `50`, `75`, `100`
 
 ### แอดมิน
 | Method | Path | Body |

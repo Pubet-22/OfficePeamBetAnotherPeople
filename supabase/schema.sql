@@ -27,6 +27,7 @@ create table if not exists public.system_settings (
     timezone                  text          not null default 'Asia/Bangkok',
     rush_start                time          default '12:00',     -- ช่วงเร่งด่วน: สั่งได้เฉพาะ Premium
     rush_end                  time          default '13:00',
+    coffee_service_fee        numeric(12, 2) not null default 20,  -- ค่าวิ่งไปเอากาแฟต่อออเดอร์ (ตัวเครื่องดื่มฟรี)
     general_service_fee       numeric(12, 2) not null default 20,  -- ค่าบริการงานจิปาถะต่อครั้ง
     premium_price             numeric(12, 2) not null default 199, -- ราคาอัปเกรด Premium (หักจาก wallet)
     premium_bonus_coins       numeric(12, 2) not null default 100, -- เหรียญแจกตอนเป็น Premium
@@ -211,13 +212,23 @@ end $$;
 insert into public.system_settings (id) values (1) on conflict (id) do nothing;
 
 insert into public.coffee_menus (name, description, price, allow_hot, allow_iced, sort_order)
+-- เมนูจากตู้กาแฟ: เครื่องดื่มฟรี (price = 0) แต่ละเมนูมีแบบร้อนหรือเย็นอย่างเดียว
 select * from (values
-    ('อเมริกาโน่', 'Americano', 45.00, true, true, 1),
-    ('ลาเต้', 'Caffe Latte', 55.00, true, true, 2),
-    ('คาปูชิโน่', 'Cappuccino', 55.00, true, true, 3),
-    ('มอคค่า', 'Mocha', 60.00, true, true, 4),
-    ('ชาเขียวนม', 'Matcha Latte', 55.00, true, true, 5),
-    ('โกโก้', 'Cocoa', 50.00, true, true, 6)
+    ('Americano',                'อเมริกาโน่ร้อน',                  0, true,  false, 1),
+    ('Iced Americano',           'อเมริกาโน่เย็น',                  0, false, true,  2),
+    ('Espresso',                 'เอสเปรสโซ่',                      0, true,  false, 3),
+    ('Cappuccino',               'คาปูชิโน่ร้อน',                    0, true,  false, 4),
+    ('Latte (Unsweetened)',      'ลาเต้ร้อน ไม่หวาน',               0, true,  false, 5),
+    ('Latte (Sweet)',            'ลาเต้ร้อน หวาน',                  0, true,  false, 6),
+    ('Iced Latte (Unsweetened)', 'ลาเต้เย็น ไม่หวาน',               0, false, true,  7),
+    ('Hot Milk',                 'นมร้อน',                          0, true,  false, 8),
+    ('Ice',                      'แก้วน้ำแข็ง',                      0, false, true,  9),
+    ('Americano (ITA)',          'อเมริกาโน่ร้อน เมล็ดอิตาเลียน',     0, true,  false, 10),
+    ('Iced Americano (ITA)',     'อเมริกาโน่เย็น เมล็ดอิตาเลียน',     0, false, true,  11),
+    ('Espresso (ITA)',           'เอสเปรสโซ่ เมล็ดอิตาเลียน',         0, true,  false, 12),
+    ('Unsweetened Latte (ITA)',  'ลาเต้ร้อน ไม่หวาน เมล็ดอิตาเลียน',  0, true,  false, 13),
+    ('Iced Latte (ITA)',         'ลาเต้เย็น เมล็ดอิตาเลียน',          0, false, true,  14),
+    ('Latte (ITA)',              'ลาเต้ร้อน เมล็ดอิตาเลียน',          0, true,  false, 15)
 ) as v(name, description, price, allow_hot, allow_iced, sort_order)
 where not exists (select 1 from public.coffee_menus);
 
