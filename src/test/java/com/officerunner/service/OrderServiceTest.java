@@ -31,7 +31,7 @@ class OrderServiceTest {
     SettingsService settingsService = mock(SettingsService.class);
     ShopStatusService shopStatus = mock(ShopStatusService.class);
     WalletService wallet = mock(WalletService.class);
-    AppProperties props = new AppProperties(null, List.of(), new BigDecimal("1000"), new BigDecimal("10000"));
+    AppProperties props = new AppProperties(List.of(), new BigDecimal("1000"), new BigDecimal("10000"));
     Clock clock = Clock.fixed(Instant.parse("2026-11-20T03:30:00Z"), ZoneOffset.UTC);
 
     OrderService service;

@@ -5,29 +5,30 @@ Backend ระบบสั่งกาแฟ / งานจิปาถะใน
 | ส่วน | ใช้อะไร |
 |---|---|
 | Database | Supabase Postgres (Spring Boot ต่อผ่าน JDBC) |
-| Login | Supabase Auth: frontend login ด้วย `supabase-js` แล้วส่ง `Authorization: Bearer <access_token>` มาที่ backend |
-| Real-time | Supabase Realtime: frontend subscribe ตาราง `orders` เอง (RLS ให้เห็นเฉพาะออเดอร์ตัวเอง) |
-| ไฟล์ (สลิป, ไฟล์ปริ้น) | Supabase Storage: frontend อัปโหลดเอง แล้วส่ง URL มาให้ backend |
+| Login | ระบบของ backend เอง: `POST /api/auth/register` / `login` (BCrypt + JWT) แล้วส่ง `Authorization: Bearer <accessToken>` |
+| อัปเดตสถานะ | frontend ดึงข้อมูลซ้ำทุก 5 วินาที |
+| ไฟล์ (สลิป, ไฟล์ปริ้น) | Supabase Storage: frontend อัปโหลดเอง (anon key) แล้วส่ง URL มาให้ backend |
 | Business logic + การเขียนข้อมูลทั้งหมด | Spring Boot (Java 21, Spring Boot 3.5) |
 
 ## ติดตั้ง
 
 1. สร้างโปรเจกต์ใน Supabase
-2. เปิด **SQL Editor** แล้วรันไฟล์ [supabase/schema.sql](supabase/schema.sql) (สร้างตาราง, RLS, trigger, Realtime, ข้อมูลเริ่มต้น)
-   - ถ้าเคยรัน `schema.sql` เวอร์ชันก่อนไปแล้ว ให้รัน [supabase/migrations/002_free_drinks_menu.sql](supabase/migrations/002_free_drinks_menu.sql) แทน (เพิ่ม `coffee_service_fee` และเปลี่ยนเมนูเป็นเครื่องดื่มจากตู้)
+2. เปิด **SQL Editor** แล้วรัน
+   - [supabase/schema.sql](supabase/schema.sql): ตาราง, RLS (ปิดการเข้าถึงผ่าน anon key), trigger, เมนูเริ่มต้น
+   - [supabase/storage.sql](supabase/storage.sql): bucket `slips` / `attachments` ให้ frontend อัปโหลดไฟล์
 3. คัดลอก `.env.example` เป็น `.env` แล้วกรอกค่า:
-   - `SUPABASE_URL`: Project Settings > API > Project URL
    - `SUPABASE_DB_URL` / `USER` / `PASSWORD`: ปุ่ม **Connect** > **Session pooler** (แปลงเป็นรูปแบบ `jdbc:postgresql://HOST:5432/postgres?sslmode=require`)
-   - `SUPABASE_JWT_SECRET`: เว้นว่างไว้ถ้าโปรเจกต์ใช้ JWT Signing Keys แบบใหม่ (ระบบจะตรวจผ่าน JWKS). ใส่ก็ต่อเมื่อโปรเจกต์ยังใช้ Legacy JWT secret
+   - `JWT_SECRET` (บังคับ, อย่างน้อย 32 ตัวอักษร): ใช้เซ็น token ตอน login ถ้าไม่ตั้ง ระบบจะไม่ยอมเปิด
 4. รัน
    ```powershell
    .\mvnw.cmd spring-boot:run
    ```
-5. สมัครผู้ใช้คนแรกผ่าน frontend แล้วตั้งให้เป็นแอดมินใน SQL Editor:
+5. สมัครผู้ใช้ผ่าน `POST /api/auth/register` (หรือหน้าบ้าน) แล้วตั้งให้เป็นแอดมินใน SQL Editor:
    ```sql
    update public.users set role = 'ADMIN' where email = 'runner@company.com';
    ```
-6. สร้าง Storage bucket (เช่น `slips`, `attachments`) ใน Supabase Dashboard ให้ frontend อัปโหลดไฟล์
+
+Session pooler ของ Supabase รับได้ 15 การเชื่อมต่อ (backend ใช้ครั้งละไม่เกิน 5) อย่ารันหลายตัวพร้อมกัน
 
 รันเทสต์: `.\mvnw.cmd test`
 
@@ -47,12 +48,14 @@ Backend ระบบสั่งกาแฟ / งานจิปาถะใน
 
 ## API
 
-ทุก endpoint (ยกเว้นที่ระบุว่า public) ต้องมี `Authorization: Bearer <supabase access token>`
-ส่วน `/api/admin/**` ต้องเป็น role `ADMIN`
+ทุก endpoint (ยกเว้นที่ระบุว่า public) ต้องมี `Authorization: Bearer <accessToken>` จาก `/api/auth/login`
+ส่วน `/api/admin/**` ต้องเป็น role `ADMIN` (อ่านจากตาราง `users` ทุก request แก้ role แล้วมีผลทันที)
 
 ### Public
 | Method | Path | หมายเหตุ |
 |---|---|---|
+| POST | `/api/auth/register` | `{ "email", "password" (อย่างน้อย 6 ตัว), "fullName" }` ได้ `{ accessToken, tokenType, user }` |
+| POST | `/api/auth/login` | `{ "email", "password" }` token อายุ 7 วัน |
 | GET | `/api/health` | |
 | GET | `/api/menus` | เมนูที่พร้อมขาย |
 | GET | `/api/shop/status` | `canOrder`, `reasonCode` (`SHOP_CLOSED` / `OUTSIDE_HOURS` / `RUSH_HOUR_PREMIUM_ONLY`), `qrImageUrl`, ค่าบริการ. ถ้าส่ง token มาจะคิดสิทธิ์ Premium ให้ |
@@ -113,27 +116,15 @@ Backend ระบบสั่งกาแฟ / งานจิปาถะใน
 Error ทุกตัวคืนรูปแบบเดียวกัน: `{ "status": 409, "code": "SHOP_CLOSED", "message": "...", "fields": null }`
 เช่น `INSUFFICIENT_COINS` (402), `INVALID_TRANSITION`, `ALREADY_TIPPED`, `VALIDATION_ERROR`
 
-## ฝั่ง Frontend (ทำ Real-time และแจ้งเตือน "งานสำเร็จ")
-
-```js
-supabase.channel('my-orders')
-  .on('postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` },
-      ({ new: o }) => {
-        if (o.status === 'COMPLETED') showTipPopup(o.id)   // แสดงปุ่ม Give a Tip
-      })
-  .subscribe()
-```
-ฝั่งแอดมิน subscribe `orders` แบบไม่ใส่ filter ได้ (RLS ให้แอดมินเห็นทุกแถว) และ subscribe `system_settings` เพื่ออัปเดตสถานะร้าน
-
 ## โครงสร้างโค้ด
 
 ```
 src/main/java/com/officerunner
-├── config/       SecurityConfig (ตรวจ JWT ของ Supabase), SupabaseJwtConverter (role จาก DB)
+├── config/       SecurityConfig (ออก/ตรวจ JWT ของ backend), DbRoleJwtConverter (role จาก DB)
 ├── domain/       Entity + enum (OrderStatus มี state machine)
 ├── repository/   Spring Data JPA
-├── service/      OrderService, WalletService, TopupService, UserService, ShopStatusService, ...
+├── service/      AuthService, OrderService, WalletService, TopupService, UserService, ShopStatusService, ...
 └── web/          Controllers + DTO
-supabase/schema.sql   ตาราง, RLS, trigger, Realtime, seed
+supabase/schema.sql    ตาราง, RLS, trigger, เมนูเริ่มต้น
+supabase/storage.sql   bucket + สิทธิ์อัปโหลดไฟล์
 ```

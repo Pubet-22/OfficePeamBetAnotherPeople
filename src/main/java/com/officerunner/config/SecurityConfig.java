@@ -1,7 +1,7 @@
 package com.officerunner.config;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
-import com.officerunner.service.UserService;
+import com.officerunner.repository.UserRepository;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import javax.crypto.SecretKey;
@@ -29,11 +29,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${app.jwt.secret:office-runner-backend-secure-jwt-secret-key-32bytes-min-2026}")
+    @Value("${app.jwt.secret}")
     private String jwtSecret;
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http, UserService userService) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http, UserRepository userRepo) throws Exception {
         http.csrf(c -> c.disable())
                 .cors(c -> {})
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -43,7 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
-                .oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(new SupabaseJwtConverter(userService))));
+                .oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(new DbRoleJwtConverter(userRepo))));
         return http.build();
     }
 
@@ -52,15 +52,26 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    private static final int MIN_SECRET_BYTES = 32;
+
+    /** HS256 ต้องใช้ secret อย่างน้อย 32 bytes; ไม่มีค่าเริ่มต้นในโค้ด ต้องตั้ง JWT_SECRET ใน .env */
+    private SecretKey signingKey() {
+        byte[] bytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        if (bytes.length < MIN_SECRET_BYTES) {
+            throw new IllegalStateException("JWT_SECRET must be at least " + MIN_SECRET_BYTES + " bytes");
+        }
+        return new SecretKeySpec(bytes, "HmacSHA256");
+    }
+
     @Bean
     public JwtEncoder jwtEncoder() {
-        SecretKey key = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        SecretKey key = signingKey();
         return new NimbusJwtEncoder(new ImmutableSecret<>(key));
     }
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        SecretKey key = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        SecretKey key = signingKey();
         return NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
     }
 

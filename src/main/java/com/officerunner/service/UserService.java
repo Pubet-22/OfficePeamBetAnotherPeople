@@ -11,11 +11,9 @@ import com.officerunner.web.dto.TransactionResponse;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,16 +26,6 @@ public class UserService {
     private final WalletService wallet;
     private final SettingsService settingsService;
     private final Clock clock;
-
-    /** เรียกทุก request ที่มี JWT: ถ้ายังไม่มีแถวใน public.users ให้สร้าง (กรณี trigger ไม่ได้ติดตั้ง) */
-    @Transactional
-    public AppUser syncFromJwt(Jwt jwt) {
-        UUID id = UUID.fromString(jwt.getSubject());
-        return userRepo.findById(id).orElseGet(() -> {
-            userRepo.insertIfMissing(id, jwt.getClaimAsString("email"), fullNameOf(jwt));
-            return userRepo.findById(id).orElseThrow();
-        });
-    }
 
     @Transactional(readOnly = true)
     public AppUser get(UUID id) {
@@ -76,15 +64,5 @@ public class UserService {
 
     static int clampLimit(int limit) {
         return Math.max(1, Math.min(limit, 200));
-    }
-
-    private static String fullNameOf(Jwt jwt) {
-        Object meta = jwt.getClaims().get("user_metadata");
-        if (meta instanceof Map<?, ?> m) {
-            Object n = m.get("full_name");
-            if (n == null) n = m.get("name");
-            return n == null ? null : n.toString();
-        }
-        return null;
     }
 }

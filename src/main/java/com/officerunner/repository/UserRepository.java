@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 public interface UserRepository extends JpaRepository<AppUser, UUID> {
@@ -19,9 +18,4 @@ public interface UserRepository extends JpaRepository<AppUser, UUID> {
     Optional<AppUser> findByEmail(String email);
 
     boolean existsByEmail(String email);
-
-    @Modifying
-    @Query(value = "insert into users (id, email, full_name) values (:id, :email, :fullName) on conflict (id) do nothing",
-            nativeQuery = true)
-    void insertIfMissing(UUID id, String email, String fullName);
 }

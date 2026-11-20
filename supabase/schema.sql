@@ -1,14 +1,15 @@
 -- =====================================================================
 -- Office Runner : Supabase schema
--- รันไฟล์นี้ใน Supabase Dashboard > SQL Editor (ครั้งเดียว)
--- Backend (Spring Boot) เชื่อมต่อด้วย role postgres -> ข้าม RLS ได้ และเป็นคนเขียนข้อมูลทั้งหมด
--- Frontend ใช้ supabase-js อ่านได้อย่างเดียวผ่าน RLS (เช่น subscribe Realtime ของ orders)
+-- รันไฟล์นี้ใน Supabase Dashboard > SQL Editor (ครั้งเดียว) แล้วรัน storage.sql ต่อ
+-- Login ใช้ระบบของ backend เอง (/api/auth, BCrypt + JWT) ไม่ได้ใช้ Supabase Auth
+-- Backend เชื่อมต่อด้วย role postgres -> ข้าม RLS และเป็นคนอ่าน/เขียนข้อมูลทั้งหมด
 -- =====================================================================
 
--- ---------- users (ผูกกับ auth.users ของ Supabase Auth) ----------
+-- ---------- users ----------
 create table if not exists public.users (
-    id             uuid primary key references auth.users (id) on delete cascade,
-    email          text,
+    id             uuid primary key default gen_random_uuid(),
+    email          text          not null unique,
+    password       text          not null,   -- BCrypt hash
     full_name      text,
     role           text          not null default 'USER' check (role in ('USER', 'ADMIN')),
     is_premium     boolean       not null default false,
@@ -146,67 +147,26 @@ drop trigger if exists trg_settings_updated on public.system_settings;
 create trigger trg_settings_updated before update on public.system_settings
     for each row execute function public.set_updated_at();
 
--- ---------- สร้างแถวใน public.users อัตโนมัติเมื่อมีคนสมัคร ----------
-create or replace function public.handle_new_user() returns trigger
-language plpgsql security definer set search_path = public as $$
-begin
-    insert into public.users (id, email, full_name)
-    values (new.id, new.email, new.raw_user_meta_data ->> 'full_name')
-    on conflict (id) do nothing;
-    return new;
-end $$;
-
+-- ---------- ล้างของเก่าจากตอนใช้ Supabase Auth (ถ้ามี) ----------
 drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created after insert on auth.users
-    for each row execute function public.handle_new_user();
+drop function if exists public.handle_new_user();
+drop policy if exists users_select on public.users;
+drop policy if exists settings_select on public.system_settings;
+drop policy if exists menus_select on public.coffee_menus;
+drop policy if exists topups_select on public.topup_requests;
+drop policy if exists orders_select on public.orders;
+drop policy if exists tx_select on public.transactions;
+drop function if exists public.is_admin();
 
--- ---------- Row Level Security (ฝั่ง frontend อ่านได้เฉพาะของตัวเอง) ----------
-create or replace function public.is_admin() returns boolean
-language sql stable security definer set search_path = public as $$
-    select exists (select 1 from public.users where id = auth.uid() and role = 'ADMIN');
-$$;
-
+-- ---------- Row Level Security ----------
+-- เปิด RLS แต่ไม่มี policy => anon key / Data API อ่านเขียนตารางไม่ได้เลย
+-- ทุกอย่างต้องผ่าน backend (ที่ต่อด้วย role postgres ซึ่งข้าม RLS)
 alter table public.users           enable row level security;
 alter table public.system_settings enable row level security;
 alter table public.coffee_menus    enable row level security;
 alter table public.topup_requests  enable row level security;
 alter table public.orders          enable row level security;
 alter table public.transactions    enable row level security;
-
-drop policy if exists users_select on public.users;
-create policy users_select on public.users for select to authenticated
-    using (id = auth.uid() or public.is_admin());
-
-drop policy if exists settings_select on public.system_settings;
-create policy settings_select on public.system_settings for select to anon, authenticated using (true);
-
-drop policy if exists menus_select on public.coffee_menus;
-create policy menus_select on public.coffee_menus for select to anon, authenticated using (true);
-
-drop policy if exists topups_select on public.topup_requests;
-create policy topups_select on public.topup_requests for select to authenticated
-    using (user_id = auth.uid() or public.is_admin());
-
-drop policy if exists orders_select on public.orders;
-create policy orders_select on public.orders for select to authenticated
-    using (user_id = auth.uid() or public.is_admin());
-
-drop policy if exists tx_select on public.transactions;
-create policy tx_select on public.transactions for select to authenticated
-    using (user_id = auth.uid() or public.is_admin());
--- ไม่มี policy insert/update/delete => เขียนได้เฉพาะผ่าน Backend เท่านั้น
-
--- ---------- Realtime (ลูกค้าติดตามสถานะออเดอร์ / สถานะร้านแบบ real-time) ----------
-do $$
-begin
-    alter publication supabase_realtime add table public.orders;
-exception when duplicate_object then null;
-end $$;
-do $$
-begin
-    alter publication supabase_realtime add table public.system_settings;
-exception when duplicate_object then null;
-end $$;
 
 -- ---------- seed ----------
 insert into public.system_settings (id) values (1) on conflict (id) do nothing;
