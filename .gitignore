@@ -1,5 +1,18 @@
-target/
-.env
+# Backend
+**/target/
+**/.env
+**/.env.local
+**/.env*.local
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# IDE & OS
 .idea/
 *.iml
 .vscode/
+.DS_Store
+Thumbs.db
