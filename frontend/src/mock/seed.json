@@ -1,0 +1,205 @@
+{
+  "users": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "email": "admin@office.test",
+      "password": "admin1234",
+      "fullName": "แอดมิน",
+      "role": "ADMIN",
+      "premium": false,
+      "premiumSince": null,
+      "coinBalance": 0
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "email": "user@office.test",
+      "password": "user1234",
+      "fullName": "พนักงานทดสอบ",
+      "role": "USER",
+      "premium": false,
+      "premiumSince": null,
+      "coinBalance": 300
+    }
+  ],
+  "menus": [
+    {
+      "id": 1,
+      "name": "Americano",
+      "description": "อเมริกาโน่ร้อน",
+      "price": 0,
+      "allowHot": true,
+      "allowIced": false,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 1
+    },
+    {
+      "id": 2,
+      "name": "Iced Americano",
+      "description": "อเมริกาโน่เย็น",
+      "price": 0,
+      "allowHot": false,
+      "allowIced": true,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 2
+    },
+    {
+      "id": 3,
+      "name": "Espresso",
+      "description": "เอสเปรสโซ่",
+      "price": 0,
+      "allowHot": true,
+      "allowIced": false,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 3
+    },
+    {
+      "id": 4,
+      "name": "Cappuccino",
+      "description": "คาปูชิโน่ร้อน",
+      "price": 0,
+      "allowHot": true,
+      "allowIced": false,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 4
+    },
+    {
+      "id": 5,
+      "name": "Latte (Unsweetened)",
+      "description": "ลาเต้ร้อน ไม่หวาน",
+      "price": 0,
+      "allowHot": true,
+      "allowIced": false,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 5
+    },
+    {
+      "id": 6,
+      "name": "Latte (Sweet)",
+      "description": "ลาเต้ร้อน หวาน",
+      "price": 0,
+      "allowHot": true,
+      "allowIced": false,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 6
+    },
+    {
+      "id": 7,
+      "name": "Iced Latte (Unsweetened)",
+      "description": "ลาเต้เย็น ไม่หวาน",
+      "price": 0,
+      "allowHot": false,
+      "allowIced": true,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 7
+    },
+    {
+      "id": 8,
+      "name": "Hot Milk",
+      "description": "นมร้อน",
+      "price": 0,
+      "allowHot": true,
+      "allowIced": false,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 8
+    },
+    {
+      "id": 9,
+      "name": "Ice",
+      "description": "แก้วน้ำแข็ง",
+      "price": 0,
+      "allowHot": false,
+      "allowIced": true,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 9
+    },
+    {
+      "id": 10,
+      "name": "Americano (ITA)",
+      "description": "อเมริกาโน่ร้อน เมล็ดอิตาเลียน",
+      "price": 0,
+      "allowHot": true,
+      "allowIced": false,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 10
+    },
+    {
+      "id": 11,
+      "name": "Iced Americano (ITA)",
+      "description": "อเมริกาโน่เย็น เมล็ดอิตาเลียน",
+      "price": 0,
+      "allowHot": false,
+      "allowIced": true,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 11
+    },
+    {
+      "id": 12,
+      "name": "Espresso (ITA)",
+      "description": "เอสเปรสโซ่ เมล็ดอิตาเลียน",
+      "price": 0,
+      "allowHot": true,
+      "allowIced": false,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 12
+    },
+    {
+      "id": 13,
+      "name": "Unsweetened Latte (ITA)",
+      "description": "ลาเต้ร้อน ไม่หวาน เมล็ดอิตาเลียน",
+      "price": 0,
+      "allowHot": true,
+      "allowIced": false,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 13
+    },
+    {
+      "id": 14,
+      "name": "Iced Latte (ITA)",
+      "description": "ลาเต้เย็น เมล็ดอิตาเลียน",
+      "price": 0,
+      "allowHot": false,
+      "allowIced": true,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 14
+    },
+    {
+      "id": 15,
+      "name": "Latte (ITA)",
+      "description": "ลาเต้ร้อน เมล็ดอิตาเลียน",
+      "price": 0,
+      "allowHot": true,
+      "allowIced": false,
+      "imageUrl": null,
+      "available": true,
+      "sortOrder": 15
+    }
+  ],
+  "settings": {
+    "open": true,
+    "openTime": "10:00",
+    "closeTime": "16:00",
+    "rushStart": "12:00",
+    "rushEnd": "13:00",
+    "coffeeServiceFee": 20,
+    "generalServiceFee": 20,
+    "premiumPrice": 199,
+    "premiumBonusCoins": 100,
+    "premiumDiscountPercent": 10,
+    "qrImageUrl": "/qr-mock.svg",
+    "maxTip": 1000
+  }
+}
