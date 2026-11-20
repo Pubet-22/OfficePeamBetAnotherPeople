@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { categoryIcon } from "@/components/icons";
 import { BinderClip, DrinkArt, liquidFor, PageHeader, Sticker, Tape } from "@/components/scrapbook";
 import {
@@ -14,7 +14,6 @@ import {
   inputClass,
   Label,
   Loading,
-  Panel,
   Receipt,
   SectionTitle,
   Tear,
@@ -41,6 +40,8 @@ import type {
 
 const PERCENT_BASE = 100;
 const MAX_QUANTITY = 20;
+/** Same breakpoint as `lg:` — at this width the receipt sits beside the menu. */
+const WIDE_LAYOUT_QUERY = "(min-width: 64rem)";
 
 type ServiceChoice = "COFFEE" | GeneralCategory;
 type StickerColor = "pink" | "sky" | "leaf" | "butter" | "lilac";
@@ -88,6 +89,7 @@ export default function OrderPage() {
 
   const { data: shop } = usePolledData(api.shop.status, { enabled: isReady });
   const [menus, setMenus] = useState<Menu[]>([]);
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   const [choice, setChoice] = useState<ServiceChoice>("COFFEE");
   const [menuId, setMenuId] = useState<number | null>(null);
@@ -136,6 +138,9 @@ export default function OrderPage() {
 
   const selectMenu = (item: Menu) => {
     setMenuId(item.id);
+    if (!window.matchMedia(WIDE_LAYOUT_QUERY).matches) {
+      receiptRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
     const temperatures = menuTemperatures(item);
     if (!temperatures.includes(temperature)) setTemperature(temperatures[0]);
   };
@@ -233,7 +238,7 @@ export default function OrderPage() {
                 <SectionTitle hint={<>เครื่องดื่มจากตู้ ฟรี จ่ายแค่ค่าวิ่ง <Coins amount={coffeeFee} /> ต่อออเดอร์</>}>
                   เมนู
                 </SectionTitle>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {menus.map((item, index) => {
                     const selected = menuId === item.id;
                     return (
@@ -244,7 +249,7 @@ export default function OrderPage() {
                         aria-pressed={selected}
                         onClick={() => selectMenu(item)}
                         className={cx(
-                          "paper relative flex flex-col items-center px-3 pt-4 pb-3 text-center transition-transform disabled:opacity-40",
+                          "paper relative flex flex-col items-center px-2 pt-3 pb-2.5 text-center transition-transform disabled:opacity-40",
                           CARD_TILTS[index % CARD_TILTS.length],
                           selected ? "ring-[3px] ring-coral" : "hover:-translate-y-0.5",
                         )}
@@ -253,64 +258,18 @@ export default function OrderPage() {
                         <DrinkArt
                           kind={drinkKind(item, index)}
                           liquid={liquidFor(item.description ?? item.name)}
-                          className="h-24 w-24"
+                          className="h-16 w-16"
                         />
-                        <span className="mt-2 font-chunky text-base leading-snug">{item.name}</span>
+                        <span className="mt-1.5 font-chunky text-sm leading-snug">{item.name}</span>
                         <span className="text-xs text-ink-soft">{item.description}</span>
-                        {item.price > 0 && <Coins amount={item.price} className="mt-1.5 font-chunky text-coral" />}
-                        {item.price === 0 && <span className="mt-1.5 font-chunky text-leaf">ฟรี</span>}
+                        {item.price > 0 && <Coins amount={item.price} className="mt-1 text-sm font-chunky text-coral" />}
+                        {item.price === 0 && <span className="mt-1 text-sm font-chunky text-leaf">ฟรี</span>}
                       </button>
                     );
                   })}
                 </div>
               </section>
 
-              <Panel className="grid gap-5 sm:grid-cols-2">
-                <div>
-                  <Label>จำนวน</Label>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      aria-label="ลดจำนวน"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    >
-                      −
-                    </Button>
-                    <span className="w-6 text-center font-chunky text-lg tabular-nums">{quantity}</span>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      aria-label="เพิ่มจำนวน"
-                      onClick={() => setQuantity(Math.min(MAX_QUANTITY, quantity + 1))}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-                <div className="sm:col-span-2">
-                  <Label hint="ไม่บังคับ">ความหวาน</Label>
-                  <div className="flex flex-wrap gap-2">
-                    <Chip selected={sweetness === null} onClick={() => setSweetness(null)}>
-                      ตามเมนู
-                    </Chip>
-                    {SWEETNESS_LEVELS.map((level) => (
-                      <Chip key={level} selected={sweetness === level} onClick={() => setSweetness(level)}>
-                        {sweetnessLabel(level)}
-                      </Chip>
-                    ))}
-                  </div>
-                </div>
-                <label className="block sm:col-span-2">
-                  <Label hint="ไม่บังคับ">ฝากบอกบาริสต้า</Label>
-                  <input
-                    className={inputClass}
-                    placeholder="ขอหลอดด้วย, ใส่แก้วที่วางบนโต๊ะ"
-                    value={details}
-                    onChange={(e) => setDetails(e.target.value)}
-                  />
-                </label>
-              </Panel>
             </>
           ) : (
             <section className="paper lined relative space-y-5 px-6 pt-8 pb-6 pl-12">
@@ -343,7 +302,7 @@ export default function OrderPage() {
           )}
         </div>
 
-        <div className="lg:sticky lg:top-28">
+        <div ref={receiptRef} className="scroll-mt-24 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:px-2 lg:pt-7 lg:pb-6">
           <Receipt className="relative rotate-1">
             <BinderClip color="leaf" />
             <h2 className="text-center font-serif-cut text-xl tracking-wide">ใบสั่ง</h2>
@@ -362,8 +321,64 @@ export default function OrderPage() {
               {isCoffee && drinksPrice > 0 && <Coins amount={drinksPrice} />}
               {!isCoffee && subtotal > 0 && <Coins amount={subtotal} />}
             </div>
+            {isCoffee && !menu && <p className="mt-1 text-sm text-ink-soft">เลือกเครื่องดื่มจากเมนู</p>}
             {isCoffee && menu && (
-              <p className="mt-1 flex justify-between text-sm">
+              <div className="mt-3 space-y-3 rounded-lg bg-butter-soft/60 p-3">
+                <div className="flex items-center justify-between">
+                  <Label>จำนวน</Label>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="size-8 px-0 py-0"
+                      aria-label="ลดจำนวน"
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    >
+                      −
+                    </Button>
+                    <span className="w-6 text-center font-chunky text-lg tabular-nums">{quantity}</span>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="size-8 px-0 py-0"
+                      aria-label="เพิ่มจำนวน"
+                      onClick={() => setQuantity(Math.min(MAX_QUANTITY, quantity + 1))}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label hint="ไม่บังคับ">ความหวาน</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Chip className="px-3 py-1 text-xs" selected={sweetness === null} onClick={() => setSweetness(null)}>
+                      ตามเมนู
+                    </Chip>
+                    {SWEETNESS_LEVELS.map((level) => (
+                      <Chip
+                        key={level}
+                        className="px-3 py-1 text-xs"
+                        selected={sweetness === level}
+                        onClick={() => setSweetness(level)}
+                      >
+                        {level}%
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+                <label className="block">
+                  <Label hint="ไม่บังคับ">ฝากบอกคนวิ่ง</Label>
+                  <input
+                    className={inputClass}
+                    placeholder="ขอหลอดด้วย"
+                    value={details}
+                    onChange={(e) => setDetails(e.target.value)}
+                  />
+                </label>
+              </div>
+            )}
+            {isCoffee && menu && (
+              <p className="mt-3 flex justify-between text-sm">
                 <span>ค่าวิ่งไปตู้กาแฟ</span>
                 <Coins amount={coffeeFee} />
               </p>
