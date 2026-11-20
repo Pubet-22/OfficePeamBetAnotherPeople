@@ -7,18 +7,19 @@
 ```powershell
 cd frontend
 npm install
-Copy-Item .env.example .env.local   # ครั้งแรกเท่านั้น
 npm run dev                         # http://localhost:3000
 ```
 
 ## สองโหมด
 
-| โหมด | ตั้งค่าใน `.env.local` | ใช้ทำอะไร |
-|---|---|---|
-| **Mock** | `NEXT_PUBLIC_API_BASE_URL=/mock-api` | ทำหน้าจอโดยไม่ต้องมี backend. API จำลองอยู่ที่ `src/mock` และเลียนแบบ backend จริง |
-| **Backend จริง** | `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api` | login ผ่าน `POST /api/auth/login` / `register` ของ backend (JWT เก็บใน localStorage) |
+ค่าเริ่มต้น (ไม่มี `.env.local`) คือคุยกับ **backend จริง** ที่ `http://localhost:8080/api` ต้องรัน backend (`.\mvnw.cmd spring-boot:run` ที่โฟลเดอร์ราก repo) ก่อน
 
-อัปโหลดสลิป/ไฟล์ปริ้นในโหมด backend ใช้ Supabase Storage: ใส่ `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` (ไม่ใส่ก็ใช้งานอื่นได้ แต่อัปโหลดไฟล์ไม่ได้)
+| โหมด | ตั้งค่าใน `frontend/.env.local` | ใช้ทำอะไร |
+|---|---|---|
+| **Backend จริง** (ค่าเริ่มต้น) | ไม่ต้องตั้ง | login ผ่าน `POST /api/auth/login` / `register` ของ backend (JWT เก็บใน localStorage) |
+| **Mock** | `NEXT_PUBLIC_API_BASE_URL=/mock-api` | ทำหน้าจอโดยไม่ต้องมี backend. API จำลองอยู่ที่ `src/mock` |
+
+หน้าล็อกอินจะบอกว่าตอนนี้อยู่โหมดไหน อัปโหลดสลิป/ไฟล์ปริ้นใช้ Supabase Storage: ใส่ `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 แก้ `.env.local` แล้วต้องรีสตาร์ต `npm run dev`
 

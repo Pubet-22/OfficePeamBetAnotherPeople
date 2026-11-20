@@ -11,6 +11,7 @@
 //                  (the backend has no upload endpoint of its own yet)
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { API_BASE_URL } from "./config";
 
 export type UploadBucket = "slips" | "attachments";
 
@@ -26,7 +27,6 @@ export type SessionBackend = {
 
 export class SessionError extends Error {}
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/mock-api";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const TOKEN_KEY = "accessToken";

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "./config";
 import { session } from "./session";
 import type {
   CreateOrderRequest,
@@ -13,8 +14,7 @@ import type {
   Transaction,
 } from "./types";
 
-// "/mock-api" = built-in mock; "http://localhost:8080/api" = the Spring Boot backend in ../src.
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/mock-api";
+const BASE_URL = API_BASE_URL;
 const HTTP_NO_CONTENT = 204;
 
 export class ApiError extends Error {
